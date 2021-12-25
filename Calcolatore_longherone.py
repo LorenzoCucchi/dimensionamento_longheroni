@@ -22,7 +22,8 @@ def area_calculator(wing):
     area = sum(areasec)*2/(10**6)
     span = (span+wing[0][1])*2    
     return area,span
-       
+
+" non cambiare ds, lasciare ds = 1 "       
 def spar_width(wing):
     ds = 1
     b = []
@@ -81,21 +82,37 @@ def dimensions(b,s,Wb_comp,F,rovArea,nn):
         t1.append(F[x]/(2*(b[x]-H_upp[x]-H_low[x])))
     return H_upp,H_low,t1,Rov_low,Rov_upp,ind  
 
-        
+def roving_table(ROV):
+    
+    r = []
+    r = ROV.copy()
+    i = 0
+    span = []
+    while i<=r[0]:
+        count = 0
+        while (r[i] <= r[i+1]):
+            r.pop(i+1)
+            count += 1
+            if((i+2)>len(r)):
+                break
+            
+        span.append(count)  
+        i += 1
+    for y in range(len(span)-1):
+        span[y+1]=span[y+1]+span[y]
+    
+    return r,span     
         
         
 sections = []
 # units are in millimeters
-
+" [ corda, apertura sezione, spessore %, larghezza longherone]"
 sections.append([255.,  81, 12., 50.]) #50
 sections.append([240., 495, 11, 50.]) #50
 sections.append([211., 905, 8.7, 40.]) #40
 sections.append([163., 705, 8.7, 30.]) #30
 sections.append([107., 560, 8.7, 20.])#20
 sections.append([ 76., 196, 8.7, 15.])#15
-
-
-
 
 
 area,span = area_calculator(sections)
@@ -115,7 +132,8 @@ sigma_comp = 500
 sig_frac = sigma_comp/sigma_tens
 tau = 10
 rovArea = 2
-nn = 1/(sig_frac+1)
+"asse neutro"
+nn = 1/(sig_frac+1) 
 
 " reazioni vincolari "
 Mbmax = weight*span/12
@@ -139,7 +157,19 @@ for x in range(len(b)):
    ROV_upp.append(np.ceil(Rov_upp[x]))
    ROV_low.append(np.ceil(Rov_low[x]))
 
+r_upp,s_upp = roving_table(ROV_upp)
+r_low,s_low = roving_table(ROV_low)
 
+
+f=open('Rovings.txt','w')
+f.write('Upper rovings  Span position\n')
+for i in range(len(r_upp)):
+    f.write(str(r_upp[i])+' '+str(s_upp[i])+'\n')
+f.write('Lower rovings  Span position\n')
+for i in range(len(r_low)):
+    f.write(str(r_low[i])+' '+str(s_low[i])+'\n')
+
+f.close()
 
 fig1, (ax1,ax2) = plt.subplots(nrows=2, ncols=1)
 ax1.plot(Rov_low)
@@ -155,5 +185,6 @@ ax2.plot(H_upp)
 ax2.set_xlabel("Span position")
 ax2.set_ylabel("Thickness")
 ax2.legend(['Lower Thicknes','Upper Thickness'])
+
 
 plt.savefig('rovings.svg')
